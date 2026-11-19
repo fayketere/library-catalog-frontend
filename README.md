@@ -108,6 +108,8 @@ Import [`postman/library-catalog.postman_collection.json`](./postman/library-cat
 
 The patron-facing React app lives in [`client/`](./client/). It requests catalog, genre, search, and pagination data from the API at `/api/v1`. Genre and search filters are combined on the server before pagination; the search field waits 400 ms after typing before updating the query. The API does not include cover art, so the frontend generates book-specific cover illustrations locally.
 
+The reading list is stored in the browser's `localStorage`, so it survives page refreshes without requiring a signed-in account or a backend endpoint. Authentication instead uses the API's HttpOnly session cookie: the app checks `/api/users/profile` on load, and protected space-booking routes require that check to succeed. Login and registration use `/api/auth/login` and `/api/auth/register`; newly registered patrons are redirected to sign in because registration does not create an authenticated session. Space booking currently captures its four fields in form-local state only and does not submit a request.
+
 Start the API in one terminal:
 
 ```sh

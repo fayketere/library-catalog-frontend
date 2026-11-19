@@ -1,22 +1,44 @@
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(/\/+$/, "");
+const authApiBaseUrl = apiBaseUrl.replace(/\/v1$/, "");
 
-export async function fetchJson(path, signal) {
+async function requestJson(url, options = {}) {
   let response;
   try {
-    response = await fetch(`${apiBaseUrl}${path}`, { signal });
+    response = await fetch(url, options);
   }
   catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw error;
     }
-    throw new Error("Unable to reach the catalog service. Check that the API is running.");
+    throw new Error("Unable to reach the library service. Check that the API is running.");
   }
 
-  const payload = await response.json().catch(() => null);
+  let payload = null;
+  if (response.status !== 204) {
+    try {
+      payload = await response.json();
+    }
+    catch {
+      payload = null;
+    }
+  }
   if (!response.ok) {
-    throw new Error(payload?.message || `The catalog service returned an error (${response.status}).`);
+    const error = new Error(payload?.message || `The library service returned an error (${response.status}).`);
+    error.status = response.status;
+    if (Array.isArray(payload?.errors) && payload.errors.length > 0) {
+      error.message += `: ${payload.errors.map(item => `${item.field}: ${item.message}`).join(", ")}`;
+    }
+    throw error;
   }
   return payload;
+}
+
+export function fetchJson(path, signal) {
+  return requestJson(`${apiBaseUrl}${path}`, { signal });
+}
+
+export function fetchAuthJson(path, options = {}) {
+  return requestJson(`${authApiBaseUrl}${path}`, { credentials: "include", ...options });
 }
 
 export function getApiBaseUrl() {

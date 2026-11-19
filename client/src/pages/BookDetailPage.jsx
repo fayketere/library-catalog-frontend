@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { fetchJson } from "../api";
+import { useReadingList } from "../hooks/useReadingList";
 import { coverImage } from "../utils/cover";
 
 export default function BookDetailPage() {
   const { id } = useParams();
+  const { readingList, addBook, removeBook } = useReadingList();
   const [book, setBook] = useState(null);
   const [genre, setGenre] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const isSaved = readingList.some(item => item.id === book?.id);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -65,6 +68,9 @@ export default function BookDetailPage() {
               <div><dt>Genre</dt><dd>{genre?.name || book.genre}</dd></div>
               <div><dt>Catalog ID</dt><dd>{book.id}</dd></div>
             </dl>
+            <button className="button button--outline" type="button" onClick={() => isSaved ? removeBook(book.id) : addBook({ ...book, genreName: genre?.name })}>
+              {isSaved ? "Remove from reading list" : "Add to reading list"}
+            </button>
             <Link className="button button--dark" to="/">Keep exploring <span aria-hidden="true">→</span></Link>
           </div>
         </article>
